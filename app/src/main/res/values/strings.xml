@@ -3,5 +3,4 @@
     <string name="print_your_name">Print your name:</string>
     <string name="your_name">Your name</string>
     <string name="confirm">Confirm</string>
-    <string name="no_name_error">Please, provide your name…</string>
 </resources>

@@ -15,7 +15,7 @@ import com.paranid5.koinmvvvmtest_compose.view_models.NameEditorViewModel
 import com.paranid5.koinmvvvmtest_compose.view_models.StateChangedCallback
 import org.koin.androidx.compose.koinViewModel
 
-private inline val String.isValidName
+private inline val CharSequence.isValidName
     get() = isNotEmpty() && all { it.isLetterOrDigit() || it == ' ' } && "  " !in this
 
 @Composable
@@ -32,32 +32,25 @@ fun NameEditor(
         .greetingsTextState
         .collectAsState(initial = "")
 
-    val inputText = remember {
-        mutableStateOf(
-            viewModel
-                .presenter
-                .currentTextState
-                .value
-                ?: ""
-        )
-    }
+    val inputText = viewModel
+        .presenter
+        .currentTextState
+        .collectAsState(initial = "")
 
-    val isButtonActive = remember { derivedStateOf { inputText.value.isValidName } }
+    val isButtonActive = remember { derivedStateOf { inputText.value?.isValidName == true } }
 
     val lifecycleOwnerState = rememberUpdatedState(LocalLifecycleOwner.current)
 
     OnUIStateChanged(
-        viewModel = viewModel,
         lifecycleOwner = lifecycleOwnerState.value,
         callback = StateChangedCallback(
             uiHandler = viewModel.handler,
             state = viewModel.isConfirmNameButtonPressedState,
-            callback = {
-                onConfirmNameButtonPressed(name = inputText.value, presenter = viewModel.presenter)
-                viewModel.finishNameSetting()
-            },
             onDispose = { viewModel.finishNameSetting() }
-        ),
+        ) {
+            onConfirmNameButtonPressed(name = inputText.value!!, presenter = viewModel.presenter)
+            viewModel.finishNameSetting()
+        },
     )
 
     Column(modifier) {
@@ -74,17 +67,21 @@ fun NameEditor(
                 .padding(top = 15.dp)
         ) {
             TextField(
-                value = inputText.value,
+                value = inputText.value ?: "",
                 placeholder = { Text(hint) },
                 maxLines = 1,
-                onValueChange = { inputText.value = it },
-                modifier = Modifier.width(200.dp).align(Alignment.CenterHorizontally),
+                onValueChange = { viewModel.presenter.currentTextState.value = it },
+                modifier = Modifier
+                    .width(200.dp)
+                    .align(Alignment.CenterHorizontally),
             )
 
             Button(
                 enabled = isButtonActive.value,
                 onClick = viewModel::onConfirmNameButtonPressed,
-                modifier = Modifier.wrapContentWidth().align(Alignment.CenterHorizontally),
+                modifier = Modifier
+                    .wrapContentWidth()
+                    .align(Alignment.CenterHorizontally),
             ) { Text(buttonText) }
         }
     }

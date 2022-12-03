@@ -7,19 +7,17 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.paranid5.koinmvvvmtest_compose.ui_handlers.UIHandler
-import com.paranid5.koinmvvvmtest_compose.view_models.ObservableViewModel
 import com.paranid5.koinmvvvmtest_compose.view_models.StateChangedCallback
 import kotlinx.coroutines.launch
 
 @Composable
-fun <H : UIHandler, VM : ObservableViewModel<*, H>> OnUIStateChanged(
-    viewModel: VM,
-    callback: StateChangedCallback<H>,
-    lifecycleOwner: LifecycleOwner
+fun <H : UIHandler> OnUIStateChanged(
+    lifecycleOwner: LifecycleOwner,
+    callback: StateChangedCallback<H>
 ) = DisposableEffect(lifecycleOwner) {
     lifecycleOwner.lifecycleScope.launch {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { callback() }
     }
 
-    onDispose { callback.onDispose(viewModel.handler) }
+    onDispose { callback.onDispose?.invoke(callback.uiHandler) }
 }
